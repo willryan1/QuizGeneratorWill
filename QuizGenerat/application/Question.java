@@ -20,6 +20,16 @@ public class Question extends QuestionDatabase{
 		this.answer = answer;
 		this.answerPosition = answerPosition;
 	}
+	
+	public Question(String metadata, String question, String topic, String[] choices, int answerPosition, String answer){
+		this.metadata = metadata;
+		this.question = question;
+		this.topic = topic;
+		this.choices = choices;
+		this.answer = answer;
+		this.answerPosition = answerPosition;
+		this.image = "none";
+	}
 
 	public int getAnswerPosition() {
 		return answerPosition;

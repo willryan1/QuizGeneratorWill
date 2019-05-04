@@ -17,10 +17,10 @@ import org.json.simple.parser.JSONParser;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-public class QuestionDatabase implements QuestionDatabaseADT{
+public class QuestionDatabase implements QuestionDatabaseADT {
 	private Map<String, List<Question>> topics;
 
-	public QuestionDatabase(){
+	public QuestionDatabase() {
 		this.topics = new HashMap<String, List<Question>>();
 	}
 
@@ -135,6 +135,17 @@ public class QuestionDatabase implements QuestionDatabaseADT{
 			list.add(key);
 		}ObservableList<String> oblist = FXCollections.observableList(list);
 		return oblist;
+	}
+	
+	public int numberOfQuestions() {
+		ObservableList<String> topics = getTopics();
+		ArrayList<String> t = new ArrayList<String>(topics);
+		int amount = 0;
+		for(int i = 0; i < t.size(); i++) {
+			List<Question> q = getQuestions(t.get(i));
+			amount += q.size();
+		}
+		return amount;
 	}
 
 }

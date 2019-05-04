@@ -1,6 +1,8 @@
 package application;
   
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.simple.JSONObject;
@@ -45,6 +47,8 @@ public class Main extends Application {
   int totalQuestions;
   int totalQuestionDataBase = 0;
   int optionsMade;
+  
+  QuestionDatabase data = new QuestionDatabase();
 
   @Override
   public void start(Stage primaryStage) {
@@ -61,15 +65,11 @@ public class Main extends Application {
           header.setScaleX(1.5);
           header.setScaleY(1.5);
 
+          totalQuestionDataBase = data.numberOfQuestions();
           Label Topic = new Label("Choose a topic:");
           Label num = new Label("Choose number of Questions: " + totalQuestionDataBase);
 
-          ObservableList<String> topics =
-              FXCollections.observableArrayList(
-                  "JavaFX",
-                  "test"
-
-              );
+          ObservableList<String> topics = data.getTopics();
           ComboBox topicsComboBox = new ComboBox(topics);
 
           ArrayList<String> numOfq = new ArrayList<String>();
@@ -94,7 +94,9 @@ public class Main extends Application {
                 totalQuestions = Integer.parseInt((String)numberOfQuestions.getValue());
 
                 //Json data right here
-
+                
+                List<Question> quesitons = data.getQuestions(topicsComboBox.getValue().toString());
+                
                 for(int i = 0; i < totalQuestions; i++) {
                   GridPane root = new GridPane();
                   root.setHgap(10);
@@ -103,14 +105,15 @@ public class Main extends Application {
                   scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
                   
                   //this is where the database will be used in order to retrive the data into create a question screen
-                  
-                  
-                 
-                  String q = "Your Question Here";//json question
-                  String[] o = {"1","2","3","4"};//json options
-                  int c = 1;//right answer
-                  Image t = new Image("flower.jpg", 100, 150, false, false);; //, 100, 150, false, false); use this as the size of the images
-
+                  Question currentNode = quesitons.get(i);
+                         
+                  String q = currentNode.getQuestion();//json question
+                  String[] o = currentNode.getChoices();//json options
+                  int c = currentNode.getAnswerPosition();//right answer
+                  Image t = null;
+                  if(!currentNode.getImage().equals("none")) {
+                    t = new Image(currentNode.getImage(), 100, 150, false, false);; //, 100, 150, false, false); use this as the size of the images
+                  }
                   questions.add(createQuestion(q,o,root,scene,c,primaryStage,t));
                 }
 
@@ -179,7 +182,7 @@ public class Main extends Application {
                         public void handle(ActionEvent event) {
                           // TODO Auto-generated method stub
 
-                          if(optionsMade < 4) {
+                          if(optionsMade <= 4) {
                               RadioButton rb = new RadioButton("");
                               TextField option = new TextField();
                               rb.setToggleGroup(tg);
@@ -205,25 +208,45 @@ public class Main extends Application {
                         public void handle(ActionEvent event) {
                           // TODO Auto-generated method stub
                           
+                         
+                          
                           String questionText = question.getText();
                           String topicText = topic.getText();
                           
                           ArrayList<String> options = new ArrayList<String>();
                           //option that is correct needs to be dded image
-                          
+                          int position = 0;
+                          String rightAnswer = "";
                           
                           for(int i = 0; i < radioButtons.getChildren().size(); i++) {
                             
                             HBox current = (HBox) radioButtons.getChildren().get(i);
                             
                             TextField textField = (TextField)current.getChildren().get(1);
-                            options.add(t.getText());
+                            options.add(textField.getText());
+                            
+                            RadioButton currentRadio = (RadioButton)radioButtons.getChildren().get(i);
+                            
+                            if(currentRadio.isSelected() && tg.getSelectedToggle() != null) {
+                              
+                              position = i;
+                              rightAnswer = textField.getText();
+                              
+                            }
                             
                           }
+                                                    
+                          String[] options2 = (String[]) options.toArray();
+                           // this is where the backend will go in order to save the text fields and options
                           
+                          if(!questionText.equals("") && !topicText.equals("") && options2 != null && !rightAnswer.equals("")) {
+                            Question q = new Question("unused", questionText, topicText, options2, position, rightAnswer);
                           
-                          // this is where the backend will go in order to save the text fields and options
-                          
+                            data.addQuestion(topicText, q);
+                            
+                            primaryStage.close();
+                            
+                          }
                           
                           
                         }
@@ -255,20 +278,7 @@ public class Main extends Application {
                
               if (selectedFile != null) {
                //file is selected
-                JSONParser jsonParser = new JSONParser();
-                try {
-                  Object object = jsonParser.parse(selectedFile.getAbsolutePath());
-                  
-                  //this is where u can save all the info of the json to the data base
-                  
-                  
-                  
-                } catch (ParseException e) {
-                  // TODO Auto-generated catch block
-                  //the json file was not able to parse or it was not a json type
-                  
-                  e.printStackTrace();
-                }
+                data.loadQuestion(selectedFile);
               }
               
             }
@@ -407,6 +417,17 @@ public class Main extends Application {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }*/
+                File n = new File("");
+                data.saveQuestionstoJSON(n);
+                FileWriter fw;
+                try {
+                  fw = new FileWriter(n);
+                  fw.flush();
+                } catch (IOException e) {
+                  // TODO Auto-generated catch block
+                  e.printStackTrace();
+                }
+                
                 
               }
               
@@ -433,15 +454,20 @@ public class Main extends Application {
         }
     });
 
-      Image image = input;
-      ImageView imageView = new ImageView(image);
+      if(input != null) {
+        Image image = input;
+        ImageView imageView = new ImageView(image);
+        gp.add(imageView, 10, 3);
+      }
       
-      gp.add(imageView, 10, 3);
+      
       gp.add(TopicQuestion, 5, 0);
       gp.add(hbButtons, 2, 3);
       gp.add(check, 5, 5);
+      
       return sc;
 
   }
   
 }
+
